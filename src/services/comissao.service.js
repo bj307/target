@@ -110,4 +110,4 @@ export function obterRelatorioComissoes() {
   return processarComissoes();
 }
 
-//TODO: criar opcao de gerar venda usando um produto do json de estoque, criando movimentaçao automatica no estoque e recalculando comissao
+// todo: criar opcao de gerar venda usando um produto do json de estoque, criando movimentacao automatica no estoque e recalculando comissao

@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   configurarUploadEstoque();
   configurarFormularioEstoque();
   configurarFormularioFinanceiro();
+  configurarUploadFinanceiro();
 });
 
 function inicializarAbas() {
@@ -459,4 +460,111 @@ function configurarFormularioFinanceiro() {
       feedback.style.display = 'block';
     }
   });
+}
+
+// configura o upload e calculo de juros em lote de titulos (desafio 3)
+function configurarUploadFinanceiro() {
+  const inputArquivo = document.getElementById('input-json-financeiro');
+  const btnLimpar = document.getElementById('btn-limpar-lote-financeiro');
+  const badgeOrigem = document.getElementById('badge-origem-financeiro');
+  const feedback = document.getElementById('feedback-upload-financeiro');
+  const boxLote = document.getElementById('box-lote-financeiro');
+
+  const loteTotalOriginal = document.getElementById('lote-total-original');
+  const loteTotalJuros = document.getElementById('lote-total-juros');
+  const loteTotalPagar = document.getElementById('lote-total-pagar');
+  const corpoTabelaLote = document.getElementById('tabela-lote-financeiro-corpo');
+
+  if (!inputArquivo) return;
+
+  // evento de selecao de arquivo de titulos
+  inputArquivo.addEventListener('change', async (evento) => {
+    const arquivo = evento.target.files[0];
+    if (!arquivo) return;
+
+    feedback.className = 'feedback-msg';
+    feedback.style.display = 'none';
+
+    try {
+      // le o arquivo como texto
+      const texto = await arquivo.text();
+      let jsonParsed;
+
+      try {
+        jsonParsed = JSON.parse(texto);
+      } catch (e) {
+        throw new Error('o arquivo selecionado nao contem um json valido.');
+      }
+
+      // envia para a api processar o lote de titulos
+      const resposta = await fetch('/api/financeiro/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonParsed)
+      });
+
+      const resultado = await resposta.json();
+
+      if (!resultado.sucesso) {
+        feedback.className = 'feedback-msg erro';
+        feedback.textContent = resultado.mensagem;
+        feedback.style.display = 'block';
+        return;
+      }
+
+      const { resumoGeral, titulosProcessados } = resultado.dados;
+
+      // atualiza cards do lote
+      loteTotalOriginal.textContent = formatarMoeda(resumoGeral.totalOriginal);
+      loteTotalJuros.textContent = formatarMoeda(resumoGeral.totalJuros);
+      loteTotalPagar.textContent = formatarMoeda(resumoGeral.totalPagar);
+
+      // preenche a tabela com os titulos processados
+      corpoTabelaLote.innerHTML = titulosProcessados.map(item => `
+        <tr>
+          <td><strong>${item.id}</strong></td>
+          <td>${item.descricao}</td>
+          <td>${formatarMoeda(item.valorOriginal)}</td>
+          <td>${item.dataVencimento}</td>
+          <td>${item.diasAtraso} ${item.diasAtraso === 1 ? 'dia' : 'dias'}</td>
+          <td><strong class="val-juros">${formatarMoeda(item.valorJuros)}</strong></td>
+          <td><strong>${formatarMoeda(item.valorTotal)}</strong></td>
+          <td>
+            <span class="badge-status ${item.status === 'em atraso' ? 'em-atraso' : 'em-dia'}">
+              ${item.status}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+
+      boxLote.style.display = 'block';
+
+      // atualiza badge e botao de voltar
+      badgeOrigem.textContent = `origem: ${arquivo.name} (${resumoGeral.totalTitulos} titulos)`;
+      badgeOrigem.classList.add('customizado');
+      btnLimpar.style.display = 'inline-flex';
+
+      feedback.className = 'feedback-msg sucesso';
+      feedback.textContent = `sucesso: lote de ${resumoGeral.totalTitulos} titulos calculado! juros totais: ${formatarMoeda(resumoGeral.totalJuros)}`;
+      feedback.style.display = 'block';
+
+    } catch (erro) {
+      feedback.className = 'feedback-msg erro';
+      feedback.textContent = erro.message;
+      feedback.style.display = 'block';
+    } finally {
+      inputArquivo.value = '';
+    }
+  });
+
+  // evento de voltar ao modo individual
+  if (btnLimpar) {
+    btnLimpar.addEventListener('click', () => {
+      boxLote.style.display = 'none';
+      badgeOrigem.textContent = 'modo: calculo individual via formulario';
+      badgeOrigem.classList.remove('customizado');
+      btnLimpar.style.display = 'none';
+      feedback.style.display = 'none';
+    });
+  }
 }

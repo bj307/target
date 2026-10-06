@@ -82,3 +82,71 @@ export function calcularJurosAtraso({ valor, dataVencimento }) {
     status: estaAtrasado ? 'em atraso' : 'em dia'
   };
 }
+
+// valida a estrutura de uma lista de titulos enviada por upload
+export function validarEstruturaTitulos(titulos) {
+  if (!Array.isArray(titulos)) {
+    throw new Error("o conteudo deve conter uma lista (array) na propriedade 'titulos'.");
+  }
+
+  if (titulos.length === 0) {
+    throw new Error('a lista de titulos informada esta vazia.');
+  }
+
+  for (const [indice, item] of titulos.entries()) {
+    const val = Number(item.valor);
+    if (!val || val <= 0 || isNaN(val)) {
+      throw new Error(`titulo #${indice + 1}: o campo 'valor' deve ser um numero maior que zero.`);
+    }
+
+    if (!item.dataVencimento) {
+      throw new Error(`titulo #${indice + 1}: o campo 'dataVencimento' e obrigatorio.`);
+    }
+  }
+}
+
+// calcula juros em lote para uma lista de titulos
+export function calcularJurosLote(titulos) {
+  validarEstruturaTitulos(titulos);
+
+  let totalOriginal = 0;
+  let totalJuros = 0;
+  let totalPagar = 0;
+  let titulosEmAtraso = 0;
+  let titulosEmDia = 0;
+
+  const titulosProcessados = titulos.map((item, indice) => {
+    const resultado = calcularJurosAtraso({
+      valor: item.valor,
+      dataVencimento: item.dataVencimento
+    });
+
+    totalOriginal += resultado.valorOriginal;
+    totalJuros += resultado.valorJuros;
+    totalPagar += resultado.valorTotal;
+
+    if (resultado.status === 'em atraso') {
+      titulosEmAtraso += 1;
+    } else {
+      titulosEmDia += 1;
+    }
+
+    return {
+      id: item.id || `TIT-${String(indice + 1).padStart(3, '0')}`,
+      descricao: item.descricao || `titulo #${indice + 1}`,
+      ...resultado
+    };
+  });
+
+  return {
+    resumoGeral: {
+      totalOriginal: Number(totalOriginal.toFixed(2)),
+      totalJuros: Number(totalJuros.toFixed(2)),
+      totalPagar: Number(totalPagar.toFixed(2)),
+      totalTitulos: titulos.length,
+      titulosEmAtraso,
+      titulosEmDia
+    },
+    titulosProcessados
+  };
+}

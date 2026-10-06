@@ -261,6 +261,23 @@
         <p class="section-desc">calculo de juros com capitalizacao composta diaria de 2,5% ao dia a partir da data de vencimento.</p>
       </div>
 
+      <!-- barra de acoes e upload de lote de titulos -->
+      <div class="upload-action-bar">
+        <div class="upload-info-group">
+          <span class="upload-status-badge" id="badge-origem-financeiro">modo: calculo individual via formulario</span>
+        </div>
+        <div class="upload-btns-group">
+          <label for="input-json-financeiro" class="upload-label-btn">
+            <span>↑ carregar json de títulos (em lote)</span>
+          </label>
+          <input type="file" id="input-json-financeiro" accept=".json" style="display: none;">
+          <button type="button" id="btn-limpar-lote-financeiro" class="reset-vendas-btn" style="display: none;">
+            voltar ao calculo individual
+          </button>
+        </div>
+      </div>
+      <div id="feedback-upload-financeiro" class="feedback-msg"></div>
+
       <div class="target-modal-frame">
         <!-- coluna de instrucao lateral -->
         <div class="modal-aside">
@@ -345,6 +362,48 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- tabela e resumo de processamento em lote de titulos -->
+      <div class="editorial-box" id="box-lote-financeiro" style="display: none;">
+        <div class="box-header">
+          <h3>Resultado do Processamento em Lote</h3>
+        </div>
+        <div class="cards-grid" style="padding: 1.5rem; margin-bottom: 0;">
+          <div class="card">
+            <span class="card-label">total original dos títulos</span>
+            <strong class="card-value" id="lote-total-original">R$ 0,00</strong>
+          </div>
+          <div class="card card-highlight">
+            <span class="card-label">total de juros acumulados</span>
+            <strong class="card-value highlight-purple" id="lote-total-juros">R$ 0,00</strong>
+          </div>
+          <div class="card">
+            <span class="card-label">total atualizado a pagar</span>
+            <strong class="card-value" id="lote-total-pagar">R$ 0,00</strong>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Título</th>
+                <th>Descrição</th>
+                <th>Valor Original</th>
+                <th>Vencimento</th>
+                <th>Dias Atraso</th>
+                <th>Juros</th>
+                <th>Total a Pagar</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-lote-financeiro-corpo">
+              <tr>
+                <td colspan="8" class="text-center">nenhum lote processado.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
