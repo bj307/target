@@ -49,6 +49,23 @@
         <p class="section-desc">apuracao do time comercial com regras de corte: abaixo de r$ 100 sem comissao, ate r$ 499,99 (1%) e a partir de r$ 500 (5%).</p>
       </div>
 
+      <!-- barra de acoes e upload de json customizado -->
+      <div class="upload-action-bar">
+        <div class="upload-info-group">
+          <span class="upload-status-badge" id="badge-origem-vendas">origem: dados padrao (vendas.json)</span>
+        </div>
+        <div class="upload-btns-group">
+          <label for="input-json-vendas" class="upload-label-btn">
+            <span>↑ carregar outro json</span>
+          </label>
+          <input type="file" id="input-json-vendas" accept=".json" style="display: none;">
+          <button type="button" id="btn-restaurar-vendas" class="reset-vendas-btn" style="display: none;">
+            restaurar padrao
+          </button>
+        </div>
+      </div>
+      <div id="feedback-upload-vendas" class="feedback-msg"></div>
+
       <!-- cards de resumo com tipografia serifada -->
       <div class="cards-grid" id="comissoes-cards">
         <div class="card">

@@ -25,17 +25,49 @@ export function calcularComissaoVenda(valor) {
   };
 }
 
-// le o json de vendas e consolida as comissoes por vendedor
-export function obterRelatorioComissoes() {
-  const caminhoArquivo = path.resolve(__dirname, '../data/vendas.json');
-  const conteudo = fs.readFileSync(caminhoArquivo, 'utf-8');
-  const { vendas } = JSON.parse(conteudo);
+// valida a estrutura do array de vendas recebido
+export function validarEstruturaVendas(vendas) {
+  if (!Array.isArray(vendas)) {
+    throw new Error("o conteudo deve conter uma lista (array) na propriedade 'vendas'.");
+  }
+
+  if (vendas.length === 0) {
+    throw new Error('a lista de vendas informada esta vazia.');
+  }
+
+  for (const [indice, item] of vendas.entries()) {
+    if (!item.vendedor || typeof item.vendedor !== 'string' || item.vendedor.trim() === '') {
+      throw new Error(`venda #${indice + 1}: o campo 'vendedor' e obrigatorio e deve ser um texto valido.`);
+    }
+
+    const val = Number(item.valor);
+    if (isNaN(val) || val < 0) {
+      throw new Error(`venda #${indice + 1}: o campo 'valor' deve ser um numero maior ou igual a zero.`);
+    }
+  }
+}
+
+// processa uma lista de vendas (customizada por upload ou a padrao do arquivo)
+export function processarComissoes(vendasCustomizadas = null) {
+  let vendas = vendasCustomizadas;
+
+  // se nao recebeu lista customizada via upload, le o arquivo padrao
+  if (!vendas) {
+    const caminhoArquivo = path.resolve(__dirname, '../data/vendas.json');
+    const conteudo = fs.readFileSync(caminhoArquivo, 'utf-8');
+    const json = JSON.parse(conteudo);
+    vendas = json.vendas;
+  }
+
+  // valida o conjunto de dados
+  validarEstruturaVendas(vendas);
 
   // agrupa os totais por vendedor
   const relatorioPorVendedor = {};
 
   for (const venda of vendas) {
-    const { vendedor, valor } = venda;
+    const vendedor = String(venda.vendedor).trim();
+    const valor = Number(venda.valor);
     const { valorComissao } = calcularComissaoVenda(valor);
 
     if (!relatorioPorVendedor[vendedor]) {
@@ -73,5 +105,9 @@ export function obterRelatorioComissoes() {
   };
 }
 
-//TODO: colocar opcao de upload para arquivo json diferente e verificar comissoes
+// mantem compatibilidade com chamadas existentes
+export function obterRelatorioComissoes() {
+  return processarComissoes();
+}
+
 //TODO: criar opcao de gerar venda usando um produto do json de estoque, criando movimentaçao automatica no estoque e recalculando comissao

@@ -157,6 +157,73 @@ body {
   max-width: 760px;
 }
 
+/* barra de upload de json customizado */
+.upload-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1.25rem;
+  margin-top: 1.25rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.upload-status-badge {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.upload-status-badge.customizado {
+  color: var(--brand-purple);
+}
+
+.upload-btns-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.upload-label-btn {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 0.45rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upload-label-btn:hover {
+  background-color: var(--color-text);
+  color: var(--bg-primary);
+}
+
+.reset-vendas-btn {
+  background-color: transparent;
+  border: 1px solid var(--brand-red);
+  color: var(--brand-red);
+  border-radius: var(--radius-pill);
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-vendas-btn:hover {
+  background-color: var(--brand-red);
+  color: #FFFFFF;
+}
+
 /* cards de metricas de comissoes */
 .cards-grid {
   display: grid;
