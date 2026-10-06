@@ -63,7 +63,92 @@
     <!-- seçao 2: estoque -->
     <section id="tab-estoque" class="tab-content">
       <h2>Movimentação de Estoque</h2>
-      <!-- conteudo do desafio 2 -->
+      <p class="section-desc">controle de entradas e saidas com retorno da quantidade final e identificador unico</p>
+
+      <div class="estoque-grid">
+        <!-- formulario de lancamento -->
+        <div class="form-card">
+          <h3>Lançar Movimentação</h3>
+          <form id="form-movimentacao">
+            <div class="form-group">
+              <label for="select-produto">Produto</label>
+              <select id="select-produto" required>
+                <option value="">selecione um produto...</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="select-tipo">Tipo</label>
+                <select id="select-tipo" required>
+                  <option value="ENTRADA">Entrada (+)</option>
+                  <option value="SAIDA">Saída (-)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="input-quantidade">Quantidade</label>
+                <input type="number" id="input-quantidade" min="1" placeholder="Ex: 10" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="input-descricao">Descrição da Movimentação</label>
+              <input type="text" id="input-descricao" placeholder="Ex: Compra de fornecedor / Venda #105" required>
+            </div>
+
+            <button type="submit" class="submit-btn">Confirmar Movimentação</button>
+          </form>
+
+          <div id="feedback-movimentacao" class="feedback-msg"></div>
+        </div>
+
+        <!-- tabela de saldo atual -->
+        <div class="saldo-card">
+          <h3>Saldos Atuais em Depósito</h3>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Descrição</th>
+                  <th>Saldo Atual</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-estoque-corpo">
+                <tr>
+                  <td colspan="3" class="text-center">carregando estoque...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- historico recente de movimentacoes -->
+      <div class="historico-section">
+        <h3>Histórico de Movimentações</h3>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Data/Hora</th>
+                <th>Produto</th>
+                <th>Tipo</th>
+                <th>Qtd</th>
+                <th>Estoque Final</th>
+                <th>Descrição</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-historico-corpo">
+              <tr>
+                <td colspan="7" class="text-center">nenhuma movimentaçao realizada ainda.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- seçao 3: financeiro -->

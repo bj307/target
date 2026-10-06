@@ -74,3 +74,4 @@ export function obterRelatorioComissoes() {
 }
 
 //TODO: colocar opcao de upload para arquivo json diferente e verificar comissoes
+//TODO: criar opcao de gerar venda usando um produto do json de estoque, criando movimentaçao automatica no estoque e recalculando comissao
