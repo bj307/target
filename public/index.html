@@ -21,8 +21,43 @@
   <main class="main-content">
     <!-- seçao 1: comissoes -->
     <section id="tab-comissoes" class="tab-content active">
-      <h2>Cálculo de Comissões</h2>
-      <!-- conteudo do desafio 1 -->
+      <h2>Cálculo de Comissões do Time Comercial</h2>
+      <p class="section-desc">regras: abaixo de r$ 100 sem comissao | r$ 100 a r$ 499,99 (1%) | a partir de r$ 500 (5%)</p>
+
+      <!-- cards de resumo da equipe -->
+      <div class="cards-grid" id="comissoes-cards">
+        <div class="card">
+          <span class="card-label">total vendido pela equipe</span>
+          <strong class="card-value" id="card-total-vendas">R$ 0,00</strong>
+        </div>
+        <div class="card">
+          <span class="card-label">total de comissoes</span>
+          <strong class="card-value highlight" id="card-total-comissao">R$ 0,00</strong>
+        </div>
+        <div class="card">
+          <span class="card-label">total de vendas realizadas</span>
+          <strong class="card-value" id="card-total-pedidos">0</strong>
+        </div>
+      </div>
+
+      <!-- tabela de vendedores -->
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Vendedor</th>
+              <th>Qtd. Vendas</th>
+              <th>Total Vendido</th>
+              <th>Total Comissão</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-comissoes-corpo">
+            <tr>
+              <td colspan="4" class="text-center">carregando dados de comissao...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <!-- seçao 2: estoque -->

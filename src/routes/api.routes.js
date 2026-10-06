@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import comissoesRouter from './comissoes.routes.js';
 
 const router = Router();
 
@@ -7,9 +8,9 @@ router.get('/status', (req, res) => {
   res.json({ status: 'API online' });
 });
 
-// placeholders para as rotas dos desafios
-// router.use('/comissoes', comissoesRouter);
-// router.use('/estoque', estoqueRouter);
-// router.use('/financeiro', financeiroRouter);
+// rotas dos modulos
+router.use('/comissoes', comissoesRouter);
+// router.use('/estoque', estoque_router);
+// router.use('/financeiro', financeiro_router);
 
 export default router;
