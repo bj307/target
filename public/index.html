@@ -21,20 +21,209 @@
   <main class="main-content">
     <!-- seçao 1: comissoes -->
     <section id="tab-comissoes" class="tab-content active">
-      <h2>Cálculo de Comissões</h2>
-      <!-- conteudo do desafio 1 -->
+      <h2>Cálculo de Comissões do Time Comercial</h2>
+      <p class="section-desc">regras: abaixo de r$ 100 sem comissao | r$ 100 a r$ 499,99 (1%) | a partir de r$ 500 (5%)</p>
+
+      <!-- cards de resumo da equipe -->
+      <div class="cards-grid" id="comissoes-cards">
+        <div class="card">
+          <span class="card-label">total vendido pela equipe</span>
+          <strong class="card-value" id="card-total-vendas">R$ 0,00</strong>
+        </div>
+        <div class="card">
+          <span class="card-label">total de comissoes</span>
+          <strong class="card-value highlight" id="card-total-comissao">R$ 0,00</strong>
+        </div>
+        <div class="card">
+          <span class="card-label">total de vendas realizadas</span>
+          <strong class="card-value" id="card-total-pedidos">0</strong>
+        </div>
+      </div>
+
+      <!-- tabela de vendedores -->
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Vendedor</th>
+              <th>Qtd. Vendas</th>
+              <th>Total Vendido</th>
+              <th>Total Comissão</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-comissoes-corpo">
+            <tr>
+              <td colspan="4" class="text-center">carregando dados de comissao...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <!-- seçao 2: estoque -->
     <section id="tab-estoque" class="tab-content">
       <h2>Movimentação de Estoque</h2>
-      <!-- conteudo do desafio 2 -->
+      <p class="section-desc">controle de entradas e saidas com retorno da quantidade final e identificador unico</p>
+
+      <div class="estoque-grid">
+        <!-- formulario de lancamento -->
+        <div class="form-card">
+          <h3>Lançar Movimentação</h3>
+          <form id="form-movimentacao">
+            <div class="form-group">
+              <label for="select-produto">Produto</label>
+              <select id="select-produto" required>
+                <option value="">selecione um produto...</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="select-tipo">Tipo</label>
+                <select id="select-tipo" required>
+                  <option value="ENTRADA">Entrada (+)</option>
+                  <option value="SAIDA">Saída (-)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="input-quantidade">Quantidade</label>
+                <input type="number" id="input-quantidade" min="1" placeholder="Ex: 10" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="input-descricao">Descrição da Movimentação</label>
+              <input type="text" id="input-descricao" placeholder="Ex: Compra de fornecedor / Venda #105" required>
+            </div>
+
+            <button type="submit" class="submit-btn">Confirmar Movimentação</button>
+          </form>
+
+          <div id="feedback-movimentacao" class="feedback-msg"></div>
+        </div>
+
+        <!-- tabela de saldo atual -->
+        <div class="saldo-card">
+          <h3>Saldos Atuais em Depósito</h3>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Descrição</th>
+                  <th>Saldo Atual</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-estoque-corpo">
+                <tr>
+                  <td colspan="3" class="text-center">carregando estoque...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- historico recente de movimentacoes -->
+      <div class="historico-section">
+        <h3>Histórico de Movimentações</h3>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Data/Hora</th>
+                <th>Produto</th>
+                <th>Tipo</th>
+                <th>Qtd</th>
+                <th>Estoque Final</th>
+                <th>Descrição</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-historico-corpo">
+              <tr>
+                <td colspan="7" class="text-center">nenhuma movimentaçao realizada ainda.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- seçao 3: financeiro -->
     <section id="tab-financeiro" class="tab-content">
-      <h2>Cálculo de Juros</h2>
-      <!-- conteudo do desafio 3 -->
+      <h2>Cálculo de Juros por Atraso</h2>
+      <p class="section-desc">calculo de juros na data de hoje considerando multa de 2,5% ao dia</p>
+
+      <div class="financeiro-grid">
+        <!-- formulario de calculo de juros -->
+        <div class="form-card">
+          <h3>Informações do Título</h3>
+          <form id="form-financeiro">
+            <div class="form-group">
+              <label for="input-valor">Valor do Título (R$)</label>
+              <input type="number" id="input-valor" step="0.01" min="0.01" placeholder="Ex: 1000.00" required>
+            </div>
+
+            <div class="form-group">
+              <label for="input-vencimento">Data de Vencimento</label>
+              <input type="date" id="input-vencimento" required>
+            </div>
+
+            <button type="submit" class="submit-btn">Calcular Juros</button>
+          </form>
+
+          <div id="feedback-financeiro" class="feedback-msg"></div>
+        </div>
+
+        <!-- resultado do calculo -->
+        <div class="saldo-card" id="card-resultado-financeiro">
+          <h3>Resultado do Cálculo</h3>
+          <div class="resultado-placeholder" id="placeholder-financeiro">
+            preencha o valor e a data de vencimento para calcular os juros.
+          </div>
+
+          <div class="resultado-detalhes" id="detalhes-financeiro" style="display: none;">
+            <div class="resultado-status-row">
+              <span>Status do Título:</span>
+              <span id="res-status-badge" class="badge-status"></span>
+            </div>
+
+            <div class="detalhes-grid">
+              <div class="detalhe-item">
+                <span class="detalhe-label">valor original</span>
+                <strong id="res-valor-original">R$ 0,00</strong>
+              </div>
+              <div class="detalhe-item">
+                <span class="detalhe-label">data de vencimento</span>
+                <strong id="res-data-vencimento">--/--/----</strong>
+              </div>
+              <div class="detalhe-item">
+                <span class="detalhe-label">data do calculo (hoje)</span>
+                <strong id="res-data-calculo">--/--/----</strong>
+              </div>
+              <div class="detalhe-item">
+                <span class="detalhe-label">dias de atraso</span>
+                <strong id="res-dias-atraso">0</strong>
+              </div>
+              <div class="detalhe-item">
+                <span class="detalhe-label">taxa diária</span>
+                <strong>2,5% ao dia</strong>
+              </div>
+              <div class="detalhe-item">
+                <span class="detalhe-label">valor dos juros</span>
+                <strong id="res-valor-juros" class="highlight-danger">R$ 0,00</strong>
+              </div>
+            </div>
+
+            <div class="total-box">
+              <span>Valor Total Atualizado:</span>
+              <strong id="res-valor-total">R$ 0,00</strong>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 
