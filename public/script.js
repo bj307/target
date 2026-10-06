@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   carregarComissoes();
   carregarEstoque();
   configurarFormularioEstoque();
+  configurarFormularioFinanceiro();
 });
 
 function inicializarAbas() {
@@ -133,7 +134,7 @@ async function carregarEstoque() {
   }
 }
 
-// configura o formulario de lancamento de estoque
+// configura o formulario de lancamento de estoque (desafio 2)
 function configurarFormularioEstoque() {
   const form = document.getElementById('form-movimentacao');
   const feedback = document.getElementById('feedback-movimentacao');
@@ -179,6 +180,78 @@ function configurarFormularioEstoque() {
     } catch (error) {
       feedback.className = 'feedback-msg erro';
       feedback.textContent = 'erro ao enviar movimentaçao ao servidor.';
+      feedback.style.display = 'block';
+    }
+  });
+}
+
+// configura o formulario de calculo de juros (desafio 3)
+function configurarFormularioFinanceiro() {
+  const form = document.getElementById('form-financeiro');
+  const feedback = document.getElementById('feedback-financeiro');
+  const placeholder = document.getElementById('placeholder-financeiro');
+  const detalhes = document.getElementById('detalhes-financeiro');
+
+  // elementos de resultado
+  const badgeStatus = document.getElementById('res-status-badge');
+  const resValorOriginal = document.getElementById('res-valor-original');
+  const resDataVencimento = document.getElementById('res-data-vencimento');
+  const resDataCalculo = document.getElementById('res-data-calculo');
+  const resDiasAtraso = document.getElementById('res-dias-atraso');
+  const resValorJuros = document.getElementById('res-valor-juros');
+  const resValorTotal = document.getElementById('res-valor-total');
+
+  form.addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+
+    const valor = Number(document.getElementById('input-valor').value);
+    const dataVencimento = document.getElementById('input-vencimento').value;
+
+    feedback.className = 'feedback-msg';
+    feedback.style.display = 'none';
+
+    try {
+      const resposta = await fetch('/api/financeiro/calcular-juros', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valor, dataVencimento })
+      });
+
+      const resultado = await resposta.json();
+
+      if (!resultado.sucesso) {
+        feedback.className = 'feedback-msg erro';
+        feedback.textContent = resultado.mensagem;
+        feedback.style.display = 'block';
+        return;
+      }
+
+      const dados = resultado.dados;
+
+      // preenche os dados calculados na tela
+      resValorOriginal.textContent = formatarMoeda(dados.valorOriginal);
+      resDataVencimento.textContent = dados.dataVencimento;
+      resDataCalculo.textContent = dados.dataCalculo;
+      resDiasAtraso.textContent = `${dados.diasAtraso} ${dados.diasAtraso === 1 ? 'dia' : 'dias'}`;
+      resValorJuros.textContent = formatarMoeda(dados.valorJuros);
+      resValorTotal.textContent = formatarMoeda(dados.valorTotal);
+
+      // atualiza badge de status
+      if (dados.status === 'em atraso') {
+        badgeStatus.className = 'badge-status em-atraso';
+        badgeStatus.textContent = 'em atraso';
+      } else {
+        badgeStatus.className = 'badge-status em-dia';
+        badgeStatus.textContent = 'em dia';
+      }
+
+      // exibe os detalhes
+      placeholder.style.display = 'none';
+      detalhes.style.display = 'block';
+
+    } catch (error) {
+      feedback.className = 'feedback-msg erro';
+      feedback.textContent = 'erro ao calcular juros no servidor.';
       feedback.style.display = 'block';
     }
   });

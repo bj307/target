@@ -153,8 +153,77 @@
 
     <!-- seçao 3: financeiro -->
     <section id="tab-financeiro" class="tab-content">
-      <h2>Cálculo de Juros</h2>
-      <!-- conteudo do desafio 3 -->
+      <h2>Cálculo de Juros por Atraso</h2>
+      <p class="section-desc">calculo de juros na data de hoje considerando multa de 2,5% ao dia</p>
+
+      <div class="financeiro-grid">
+        <!-- formulario de calculo de juros -->
+        <div class="form-card">
+          <h3>Informações do Título</h3>
+          <form id="form-financeiro">
+            <div class="form-group">
+              <label for="input-valor">Valor do Título (R$)</label>
+              <input type="number" id="input-valor" step="0.01" min="0.01" placeholder="Ex: 1000.00" required>
+            </div>
+
+            <div class="form-group">
+              <label for="input-vencimento">Data de Vencimento</label>
+              <input type="date" id="input-vencimento" required>
+            </div>
+
+            <button type="submit" class="submit-btn">Calcular Juros</button>
+          </form>
+
+          <div id="feedback-financeiro" class="feedback-msg"></div>
+        </div>
+
+        <!-- resultado do calculo -->
+        <div class="saldo-card" id="card-resultado-financeiro">
+          <h3>Resultado do Cálculo</h3>
+          <div class="resultado-placeholder" id="placeholder-financeiro">
+            preencha o valor e a data de vencimento para calcular os juros.
+          </div>
+
+          <div class="resultado-detalhes" id="detalhes-financeiro" style="display: none;">
+            <div class="resultado-status-row">
+              <span>Status do Título:</span>
+              <span id="res-status-badge" class="badge-status"></span>
+            </div>
+
+            <div class="detalhes-grid">
+              <div class="detalhe-item">
+                <span class="detalhe-label">valor original</span>
+                <strong id="res-valor-original">R$ 0,00</strong>
+              </div>
+              <div class="detalhe-item">
+                <span class="detalhe-label">data de vencimento</span>
+                <strong id="res-data-vencimento">--/--/----</strong>
+              </div>
+              <div class="detalhe-item">
+                <span class="detalhe-label">data do calculo (hoje)</span>
+                <strong id="res-data-calculo">--/--/----</strong>
+              </div>
+              <div class="detalhe-item">
+                <span class="detalhe-label">dias de atraso</span>
+                <strong id="res-dias-atraso">0</strong>
+              </div>
+              <div class="detalhe-item">
+                <span class="detalhe-label">taxa diária</span>
+                <strong>2,5% ao dia</strong>
+              </div>
+              <div class="detalhe-item">
+                <span class="detalhe-label">valor dos juros</span>
+                <strong id="res-valor-juros" class="highlight-danger">R$ 0,00</strong>
+              </div>
+            </div>
+
+            <div class="total-box">
+              <span>Valor Total Atualizado:</span>
+              <strong id="res-valor-total">R$ 0,00</strong>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 
