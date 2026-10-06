@@ -98,6 +98,65 @@ class EstoqueService {
   listarHistorico() {
     return this.historico;
   }
+
+  // valida a estrutura de uma lista de produtos de estoque
+  validarEstruturaEstoque(produtos) {
+    if (!Array.isArray(produtos)) {
+      throw new Error("o conteudo deve conter uma lista (array) na propriedade 'estoque'.");
+    }
+
+    if (produtos.length === 0) {
+      throw new Error('a lista de produtos informada esta vazia.');
+    }
+
+    const codigosVistos = new Set();
+
+    for (const [indice, item] of produtos.entries()) {
+      const cod = Number(item.codigoProduto);
+      if (!cod || !Number.isInteger(cod) || cod <= 0) {
+        throw new Error(`produto #${indice + 1}: o campo 'codigoProduto' deve ser um numero inteiro positivo.`);
+      }
+
+      if (codigosVistos.has(cod)) {
+        throw new Error(`o codigo de produto ${cod} esta duplicado na lista enviada.`);
+      }
+      codigosVistos.add(cod);
+
+      if (!item.descricaoProduto || typeof item.descricaoProduto !== 'string' || item.descricaoProduto.trim() === '') {
+        throw new Error(`produto #${indice + 1}: o campo 'descricaoProduto' e obrigatorio.`);
+      }
+
+      const est = Number(item.estoque);
+      if (isNaN(est) || !Number.isInteger(est) || est < 0) {
+        throw new Error(`produto #${indice + 1}: o campo 'estoque' deve ser um numero inteiro maior ou igual a zero.`);
+      }
+    }
+  }
+
+  // carrega um novo catalogo de estoque customizado a partir de upload
+  carregarEstoqueCustomizado(produtosCustomizados) {
+    this.validarEstruturaEstoque(produtosCustomizados);
+
+    this.produtos = produtosCustomizados.map(p => ({
+      codigoProduto: Number(p.codigoProduto),
+      descricaoProduto: String(p.descricaoProduto).trim(),
+      estoque: Number(p.estoque)
+    }));
+
+    // reinicia o historico de movimentacoes para o novo catalogo
+    this.historico = [];
+    this.proximoId = 1;
+
+    return this.produtos;
+  }
+
+  // restaura o estoque padrao a partir do arquivo json
+  restaurarEstoquePadrao() {
+    this.carregarDados();
+    this.historico = [];
+    this.proximoId = 1;
+    return this.produtos;
+  }
 }
 
 export const estoqueService = new EstoqueService();

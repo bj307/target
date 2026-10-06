@@ -118,6 +118,23 @@
         <p class="section-desc">lancamento de entradas e saidas com validacao de saldo nao-negativo e identificador unico.</p>
       </div>
 
+      <!-- barra de acoes e upload de catalogo de estoque customizado -->
+      <div class="upload-action-bar">
+        <div class="upload-info-group">
+          <span class="upload-status-badge" id="badge-origem-estoque">origem: dados padrao (estoque.json)</span>
+        </div>
+        <div class="upload-btns-group">
+          <label for="input-json-estoque" class="upload-label-btn">
+            <span>↑ carregar outro json</span>
+          </label>
+          <input type="file" id="input-json-estoque" accept=".json" style="display: none;">
+          <button type="button" id="btn-restaurar-estoque" class="reset-vendas-btn" style="display: none;">
+            restaurar padrao
+          </button>
+        </div>
+      </div>
+      <div id="feedback-upload-estoque" class="feedback-msg"></div>
+
       <!-- container no estilo do modal institucional da target -->
       <div class="target-modal-frame">
         <!-- coluna da ilustracao visual lateral -->

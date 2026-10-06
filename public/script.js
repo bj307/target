@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   carregarComissoes();
   configurarUploadComissoes();
   carregarEstoque();
+  configurarUploadEstoque();
   configurarFormularioEstoque();
   configurarFormularioFinanceiro();
 });
@@ -171,11 +172,57 @@ function configurarUploadComissoes() {
   }
 }
 
-// busca dados de estoque da api e preenche dropdown e tabela (desafio 2)
-async function carregarEstoque() {
+// renderiza dados de estoque nos selects e tabelas
+function renderizarEstoque(dados) {
   const selectProduto = document.getElementById('select-produto');
   const corpoEstoque = document.getElementById('tabela-estoque-corpo');
   const corpoHistorico = document.getElementById('tabela-historico-corpo');
+
+  const { produtos, historico } = dados;
+
+  // preenche select de produtos
+  selectProduto.innerHTML = '<option value="">selecione um produto...</option>' +
+    produtos.map(p => `
+      <option value="${p.codigoProduto}">${p.codigoProduto} - ${p.descricaoProduto} (saldo: ${p.estoque})</option>
+    `).join('');
+
+  // preenche tabela de saldos atuais
+  corpoEstoque.innerHTML = produtos.map(p => `
+    <tr>
+      <td>${p.codigoProduto}</td>
+      <td><strong>${p.descricaoProduto}</strong></td>
+      <td><strong>${p.estoque}</strong> un.</td>
+    </tr>
+  `).join('');
+
+  // preenche tabela de historico
+  if (!historico || historico.length === 0) {
+    corpoHistorico.innerHTML = '<tr><td colspan="7" class="text-center">nenhuma movimentaçao realizada ainda.</td></tr>';
+  } else {
+    corpoHistorico.innerHTML = historico.map(h => `
+      <tr>
+        <td>#${h.idMovimentacao}</td>
+        <td>${h.dataHora}</td>
+        <td>${h.descricaoProduto}</td>
+        <td>
+          <span class="${h.tipo === 'ENTRADA' ? 'badge-entrada' : 'badge-saida'}">
+            ${h.tipo}
+          </span>
+        </td>
+        <td>${h.quantidade}</td>
+        <td><strong>${h.estoqueFinal}</strong></td>
+        <td>${h.descricao}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+// busca dados de estoque padrao da api (desafio 2)
+async function carregarEstoque() {
+  const corpoEstoque = document.getElementById('tabela-estoque-corpo');
+  const badgeOrigem = document.getElementById('badge-origem-estoque');
+  const btnRestaurar = document.getElementById('btn-restaurar-estoque');
+  const feedback = document.getElementById('feedback-upload-estoque');
 
   try {
     const resposta = await fetch('/api/estoque');
@@ -186,46 +233,108 @@ async function carregarEstoque() {
       return;
     }
 
-    const { produtos, historico } = resultado.dados;
+    renderizarEstoque(resultado.dados);
 
-    // preenche select de produtos
-    selectProduto.innerHTML = '<option value="">selecione um produto...</option>' +
-      produtos.map(p => `
-        <option value="${p.codigoProduto}">${p.codigoProduto} - ${p.descricaoProduto} (saldo: ${p.estoque})</option>
-      `).join('');
-
-    // preenche tabela de saldos atuais
-    corpoEstoque.innerHTML = produtos.map(p => `
-      <tr>
-        <td>${p.codigoProduto}</td>
-        <td><strong>${p.descricaoProduto}</strong></td>
-        <td><strong>${p.estoque}</strong> un.</td>
-      </tr>
-    `).join('');
-
-    // preenche tabela de historico
-    if (!historico || historico.length === 0) {
-      corpoHistorico.innerHTML = '<tr><td colspan="7" class="text-center">nenhuma movimentaçao realizada ainda.</td></tr>';
-    } else {
-      corpoHistorico.innerHTML = historico.map(h => `
-        <tr>
-          <td>#${h.idMovimentacao}</td>
-          <td>${h.dataHora}</td>
-          <td>${h.descricaoProduto}</td>
-          <td>
-            <span class="${h.tipo === 'ENTRADA' ? 'badge-entrada' : 'badge-saida'}">
-              ${h.tipo}
-            </span>
-          </td>
-          <td>${h.quantidade}</td>
-          <td><strong>${h.estoqueFinal}</strong></td>
-          <td>${h.descricao}</td>
-        </tr>
-      `).join('');
+    if (badgeOrigem) {
+      badgeOrigem.textContent = 'origem: dados padrao (estoque.json)';
+      badgeOrigem.classList.remove('customizado');
+    }
+    if (btnRestaurar) {
+      btnRestaurar.style.display = 'none';
+    }
+    if (feedback) {
+      feedback.style.display = 'none';
     }
 
   } catch (error) {
     corpoEstoque.innerHTML = '<tr><td colspan="3" class="text-center">erro ao comunicar com o servidor.</td></tr>';
+  }
+}
+
+// configura o upload e leitura de um json diferente para o estoque (desafio 2)
+function configurarUploadEstoque() {
+  const inputArquivo = document.getElementById('input-json-estoque');
+  const btnRestaurar = document.getElementById('btn-restaurar-estoque');
+  const badgeOrigem = document.getElementById('badge-origem-estoque');
+  const feedback = document.getElementById('feedback-upload-estoque');
+
+  if (!inputArquivo) return;
+
+  // evento de selecao de arquivo de estoque
+  inputArquivo.addEventListener('change', async (evento) => {
+    const arquivo = evento.target.files[0];
+    if (!arquivo) return;
+
+    feedback.className = 'feedback-msg';
+    feedback.style.display = 'none';
+
+    try {
+      // le o arquivo como texto
+      const texto = await arquivo.text();
+      let jsonParsed;
+
+      try {
+        jsonParsed = JSON.parse(texto);
+      } catch (e) {
+        throw new Error('o arquivo selecionado nao contem um json valido.');
+      }
+
+      // envia para a api processar o upload do estoque
+      const resposta = await fetch('/api/estoque/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonParsed)
+      });
+
+      const resultado = await resposta.json();
+
+      if (!resultado.sucesso) {
+        feedback.className = 'feedback-msg erro';
+        feedback.textContent = resultado.mensagem;
+        feedback.style.display = 'block';
+        return;
+      }
+
+      // renderiza os novos produtos
+      renderizarEstoque(resultado.dados);
+
+      // atualiza badge e botao de restaurar
+      badgeOrigem.textContent = `origem: ${arquivo.name} (${resultado.dados.produtos.length} produtos)`;
+      badgeOrigem.classList.add('customizado');
+      btnRestaurar.style.display = 'inline-flex';
+
+      feedback.className = 'feedback-msg sucesso';
+      feedback.textContent = `sucesso: catalogo '${arquivo.name}' carregado com ${resultado.dados.produtos.length} produtos!`;
+      feedback.style.display = 'block';
+
+    } catch (erro) {
+      feedback.className = 'feedback-msg erro';
+      feedback.textContent = erro.message;
+      feedback.style.display = 'block';
+    } finally {
+      inputArquivo.value = '';
+    }
+  });
+
+  // evento de restaurar estoque padrao
+  if (btnRestaurar) {
+    btnRestaurar.addEventListener('click', async () => {
+      try {
+        const resposta = await fetch('/api/estoque/restaurar', { method: 'POST' });
+        const resultado = await resposta.json();
+        if (resultado.sucesso) {
+          renderizarEstoque(resultado.dados);
+          badgeOrigem.textContent = 'origem: dados padrao (estoque.json)';
+          badgeOrigem.classList.remove('customizado');
+          btnRestaurar.style.display = 'none';
+          feedback.className = 'feedback-msg sucesso';
+          feedback.textContent = 'estoque padrao restaurado com sucesso!';
+          feedback.style.display = 'block';
+        }
+      } catch (e) {
+        carregarEstoque();
+      }
+    });
   }
 }
 
