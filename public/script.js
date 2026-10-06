@@ -2,9 +2,12 @@
 document.addEventListener('DOMContentLoaded', () => {
   inicializarAbas();
   carregarComissoes();
+  configurarUploadComissoes();
   carregarEstoque();
+  configurarUploadEstoque();
   configurarFormularioEstoque();
   configurarFormularioFinanceiro();
+  configurarUploadFinanceiro();
 });
 
 function inicializarAbas() {
@@ -38,12 +41,37 @@ function formatarMoeda(valor) {
   });
 }
 
-// busca dados de comissao da api e renderiza na tela (desafio 1)
-async function carregarComissoes() {
+// renderiza dados de comissao na tela
+function renderizarComissoes(dados) {
   const corpoTabela = document.getElementById('tabela-comissoes-corpo');
   const cardTotalVendas = document.getElementById('card-total-vendas');
   const cardTotalComissao = document.getElementById('card-total-comissao');
   const cardTotalPedidos = document.getElementById('card-total-pedidos');
+
+  const { totalEquipe, vendedores } = dados;
+
+  // atualiza cards de totais
+  cardTotalVendas.textContent = formatarMoeda(totalEquipe.totalVendas);
+  cardTotalComissao.textContent = formatarMoeda(totalEquipe.totalComissao);
+  cardTotalPedidos.textContent = totalEquipe.totalVendasRealizadas;
+
+  // monta as linhas da tabela
+  corpoTabela.innerHTML = vendedores.map(item => `
+    <tr>
+      <td><strong>${item.vendedor}</strong></td>
+      <td>${item.quantidadeVendas}</td>
+      <td>${formatarMoeda(item.totalVendas)}</td>
+      <td><strong>${formatarMoeda(item.totalComissao)}</strong></td>
+    </tr>
+  `).join('');
+}
+
+// busca dados de comissao padrao da api (desafio 1)
+async function carregarComissoes() {
+  const corpoTabela = document.getElementById('tabela-comissoes-corpo');
+  const badgeOrigem = document.getElementById('badge-origem-vendas');
+  const btnRestaurar = document.getElementById('btn-restaurar-vendas');
+  const feedback = document.getElementById('feedback-upload-vendas');
 
   try {
     const resposta = await fetch('/api/comissoes');
@@ -54,33 +82,148 @@ async function carregarComissoes() {
       return;
     }
 
-    const { totalEquipe, vendedores } = resultado.dados;
+    renderizarComissoes(resultado.dados);
 
-    // atualiza cards de totais
-    cardTotalVendas.textContent = formatarMoeda(totalEquipe.totalVendas);
-    cardTotalComissao.textContent = formatarMoeda(totalEquipe.totalComissao);
-    cardTotalPedidos.textContent = totalEquipe.totalVendasRealizadas;
-
-    // monta as linhas da tabela
-    corpoTabela.innerHTML = vendedores.map(item => `
-      <tr>
-        <td><strong>${item.vendedor}</strong></td>
-        <td>${item.quantidadeVendas}</td>
-        <td>${formatarMoeda(item.totalVendas)}</td>
-        <td><strong>${formatarMoeda(item.totalComissao)}</strong></td>
-      </tr>
-    `).join('');
+    if (badgeOrigem) {
+      badgeOrigem.textContent = 'origem: dados padrao (vendas.json)';
+      badgeOrigem.classList.remove('customizado');
+    }
+    if (btnRestaurar) {
+      btnRestaurar.style.display = 'none';
+    }
+    if (feedback) {
+      feedback.style.display = 'none';
+    }
 
   } catch (error) {
     corpoTabela.innerHTML = '<tr><td colspan="4" class="text-center">erro na comunicaçao com a api.</td></tr>';
   }
 }
 
-// busca dados de estoque da api e preenche dropdown e tabela (desafio 2)
-async function carregarEstoque() {
+// configura o upload e leitura de um json diferente para recalcular comissoes
+function configurarUploadComissoes() {
+  const inputArquivo = document.getElementById('input-json-vendas');
+  const btnRestaurar = document.getElementById('btn-restaurar-vendas');
+  const badgeOrigem = document.getElementById('badge-origem-vendas');
+  const feedback = document.getElementById('feedback-upload-vendas');
+
+  if (!inputArquivo) return;
+
+  // evento de selecao de arquivo
+  inputArquivo.addEventListener('change', async (evento) => {
+    const arquivo = evento.target.files[0];
+    if (!arquivo) return;
+
+    feedback.className = 'feedback-msg';
+    feedback.style.display = 'none';
+
+    try {
+      // le o arquivo como texto
+      const texto = await arquivo.text();
+      let jsonParsed;
+
+      try {
+        jsonParsed = JSON.parse(texto);
+      } catch (e) {
+        throw new Error('o arquivo selecionado nao contem um json valido.');
+      }
+
+      // envia para a api processar e calcular comissoes
+      const resposta = await fetch('/api/comissoes/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonParsed)
+      });
+
+      const resultado = await resposta.json();
+
+      if (!resultado.sucesso) {
+        feedback.className = 'feedback-msg erro';
+        feedback.textContent = resultado.mensagem;
+        feedback.style.display = 'block';
+        return;
+      }
+
+      // renderiza o novo resultado na tela
+      renderizarComissoes(resultado.dados);
+
+      // atualiza badge e botao de restaurar
+      badgeOrigem.textContent = `origem: ${arquivo.name} (${resultado.dados.totalEquipe.totalVendasRealizadas} vendas)`;
+      badgeOrigem.classList.add('customizado');
+      btnRestaurar.style.display = 'inline-flex';
+
+      feedback.className = 'feedback-msg sucesso';
+      feedback.textContent = `sucesso: arquivo '${arquivo.name}' carregado e comissoes recalculadas!`;
+      feedback.style.display = 'block';
+
+    } catch (erro) {
+      feedback.className = 'feedback-msg erro';
+      feedback.textContent = erro.message;
+      feedback.style.display = 'block';
+    } finally {
+      inputArquivo.value = '';
+    }
+  });
+
+  // evento de restaurar dados padrao
+  if (btnRestaurar) {
+    btnRestaurar.addEventListener('click', () => {
+      carregarComissoes();
+    });
+  }
+}
+
+// renderiza dados de estoque nos selects e tabelas
+function renderizarEstoque(dados) {
   const selectProduto = document.getElementById('select-produto');
   const corpoEstoque = document.getElementById('tabela-estoque-corpo');
   const corpoHistorico = document.getElementById('tabela-historico-corpo');
+
+  const { produtos, historico } = dados;
+
+  // preenche select de produtos
+  selectProduto.innerHTML = '<option value="">selecione um produto...</option>' +
+    produtos.map(p => `
+      <option value="${p.codigoProduto}">${p.codigoProduto} - ${p.descricaoProduto} (saldo: ${p.estoque})</option>
+    `).join('');
+
+  // preenche tabela de saldos atuais
+  corpoEstoque.innerHTML = produtos.map(p => `
+    <tr>
+      <td>${p.codigoProduto}</td>
+      <td><strong>${p.descricaoProduto}</strong></td>
+      <td><strong>${p.estoque}</strong> un.</td>
+    </tr>
+  `).join('');
+
+  // preenche tabela de historico
+  if (!historico || historico.length === 0) {
+    corpoHistorico.innerHTML = '<tr><td colspan="7" class="text-center">nenhuma movimentaçao realizada ainda.</td></tr>';
+  } else {
+    corpoHistorico.innerHTML = historico.map(h => `
+      <tr>
+        <td>#${h.idMovimentacao}</td>
+        <td>${h.dataHora}</td>
+        <td>${h.descricaoProduto}</td>
+        <td>
+          <span class="${h.tipo === 'ENTRADA' ? 'badge-entrada' : 'badge-saida'}">
+            ${h.tipo}
+          </span>
+        </td>
+        <td>${h.quantidade}</td>
+        <td><strong>${h.estoqueFinal}</strong></td>
+        <td>${h.descricao}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+// busca dados de estoque padrao da api (desafio 2)
+async function carregarEstoque() {
+  const corpoEstoque = document.getElementById('tabela-estoque-corpo');
+  const badgeOrigem = document.getElementById('badge-origem-estoque');
+  const btnRestaurar = document.getElementById('btn-restaurar-estoque');
+  const feedback = document.getElementById('feedback-upload-estoque');
 
   try {
     const resposta = await fetch('/api/estoque');
@@ -91,46 +234,108 @@ async function carregarEstoque() {
       return;
     }
 
-    const { produtos, historico } = resultado.dados;
+    renderizarEstoque(resultado.dados);
 
-    // preenche select de produtos
-    selectProduto.innerHTML = '<option value="">selecione um produto...</option>' +
-      produtos.map(p => `
-        <option value="${p.codigoProduto}">${p.codigoProduto} - ${p.descricaoProduto} (saldo: ${p.estoque})</option>
-      `).join('');
-
-    // preenche tabela de saldos atuais
-    corpoEstoque.innerHTML = produtos.map(p => `
-      <tr>
-        <td>${p.codigoProduto}</td>
-        <td><strong>${p.descricaoProduto}</strong></td>
-        <td><strong>${p.estoque}</strong> un.</td>
-      </tr>
-    `).join('');
-
-    // preenche tabela de historico
-    if (!historico || historico.length === 0) {
-      corpoHistorico.innerHTML = '<tr><td colspan="7" class="text-center">nenhuma movimentaçao realizada ainda.</td></tr>';
-    } else {
-      corpoHistorico.innerHTML = historico.map(h => `
-        <tr>
-          <td>#${h.idMovimentacao}</td>
-          <td>${h.dataHora}</td>
-          <td>${h.descricaoProduto}</td>
-          <td>
-            <span class="${h.tipo === 'ENTRADA' ? 'badge-entrada' : 'badge-saida'}">
-              ${h.tipo}
-            </span>
-          </td>
-          <td>${h.quantidade}</td>
-          <td><strong>${h.estoqueFinal}</strong></td>
-          <td>${h.descricao}</td>
-        </tr>
-      `).join('');
+    if (badgeOrigem) {
+      badgeOrigem.textContent = 'origem: dados padrao (estoque.json)';
+      badgeOrigem.classList.remove('customizado');
+    }
+    if (btnRestaurar) {
+      btnRestaurar.style.display = 'none';
+    }
+    if (feedback) {
+      feedback.style.display = 'none';
     }
 
   } catch (error) {
     corpoEstoque.innerHTML = '<tr><td colspan="3" class="text-center">erro ao comunicar com o servidor.</td></tr>';
+  }
+}
+
+// configura o upload e leitura de um json diferente para o estoque (desafio 2)
+function configurarUploadEstoque() {
+  const inputArquivo = document.getElementById('input-json-estoque');
+  const btnRestaurar = document.getElementById('btn-restaurar-estoque');
+  const badgeOrigem = document.getElementById('badge-origem-estoque');
+  const feedback = document.getElementById('feedback-upload-estoque');
+
+  if (!inputArquivo) return;
+
+  // evento de selecao de arquivo de estoque
+  inputArquivo.addEventListener('change', async (evento) => {
+    const arquivo = evento.target.files[0];
+    if (!arquivo) return;
+
+    feedback.className = 'feedback-msg';
+    feedback.style.display = 'none';
+
+    try {
+      // le o arquivo como texto
+      const texto = await arquivo.text();
+      let jsonParsed;
+
+      try {
+        jsonParsed = JSON.parse(texto);
+      } catch (e) {
+        throw new Error('o arquivo selecionado nao contem um json valido.');
+      }
+
+      // envia para a api processar o upload do estoque
+      const resposta = await fetch('/api/estoque/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonParsed)
+      });
+
+      const resultado = await resposta.json();
+
+      if (!resultado.sucesso) {
+        feedback.className = 'feedback-msg erro';
+        feedback.textContent = resultado.mensagem;
+        feedback.style.display = 'block';
+        return;
+      }
+
+      // renderiza os novos produtos
+      renderizarEstoque(resultado.dados);
+
+      // atualiza badge e botao de restaurar
+      badgeOrigem.textContent = `origem: ${arquivo.name} (${resultado.dados.produtos.length} produtos)`;
+      badgeOrigem.classList.add('customizado');
+      btnRestaurar.style.display = 'inline-flex';
+
+      feedback.className = 'feedback-msg sucesso';
+      feedback.textContent = `sucesso: catalogo '${arquivo.name}' carregado com ${resultado.dados.produtos.length} produtos!`;
+      feedback.style.display = 'block';
+
+    } catch (erro) {
+      feedback.className = 'feedback-msg erro';
+      feedback.textContent = erro.message;
+      feedback.style.display = 'block';
+    } finally {
+      inputArquivo.value = '';
+    }
+  });
+
+  // evento de restaurar estoque padrao
+  if (btnRestaurar) {
+    btnRestaurar.addEventListener('click', async () => {
+      try {
+        const resposta = await fetch('/api/estoque/restaurar', { method: 'POST' });
+        const resultado = await resposta.json();
+        if (resultado.sucesso) {
+          renderizarEstoque(resultado.dados);
+          badgeOrigem.textContent = 'origem: dados padrao (estoque.json)';
+          badgeOrigem.classList.remove('customizado');
+          btnRestaurar.style.display = 'none';
+          feedback.className = 'feedback-msg sucesso';
+          feedback.textContent = 'estoque padrao restaurado com sucesso!';
+          feedback.style.display = 'block';
+        }
+      } catch (e) {
+        carregarEstoque();
+      }
+    });
   }
 }
 
@@ -255,4 +460,111 @@ function configurarFormularioFinanceiro() {
       feedback.style.display = 'block';
     }
   });
+}
+
+// configura o upload e calculo de juros em lote de titulos (desafio 3)
+function configurarUploadFinanceiro() {
+  const inputArquivo = document.getElementById('input-json-financeiro');
+  const btnLimpar = document.getElementById('btn-limpar-lote-financeiro');
+  const badgeOrigem = document.getElementById('badge-origem-financeiro');
+  const feedback = document.getElementById('feedback-upload-financeiro');
+  const boxLote = document.getElementById('box-lote-financeiro');
+
+  const loteTotalOriginal = document.getElementById('lote-total-original');
+  const loteTotalJuros = document.getElementById('lote-total-juros');
+  const loteTotalPagar = document.getElementById('lote-total-pagar');
+  const corpoTabelaLote = document.getElementById('tabela-lote-financeiro-corpo');
+
+  if (!inputArquivo) return;
+
+  // evento de selecao de arquivo de titulos
+  inputArquivo.addEventListener('change', async (evento) => {
+    const arquivo = evento.target.files[0];
+    if (!arquivo) return;
+
+    feedback.className = 'feedback-msg';
+    feedback.style.display = 'none';
+
+    try {
+      // le o arquivo como texto
+      const texto = await arquivo.text();
+      let jsonParsed;
+
+      try {
+        jsonParsed = JSON.parse(texto);
+      } catch (e) {
+        throw new Error('o arquivo selecionado nao contem um json valido.');
+      }
+
+      // envia para a api processar o lote de titulos
+      const resposta = await fetch('/api/financeiro/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonParsed)
+      });
+
+      const resultado = await resposta.json();
+
+      if (!resultado.sucesso) {
+        feedback.className = 'feedback-msg erro';
+        feedback.textContent = resultado.mensagem;
+        feedback.style.display = 'block';
+        return;
+      }
+
+      const { resumoGeral, titulosProcessados } = resultado.dados;
+
+      // atualiza cards do lote
+      loteTotalOriginal.textContent = formatarMoeda(resumoGeral.totalOriginal);
+      loteTotalJuros.textContent = formatarMoeda(resumoGeral.totalJuros);
+      loteTotalPagar.textContent = formatarMoeda(resumoGeral.totalPagar);
+
+      // preenche a tabela com os titulos processados
+      corpoTabelaLote.innerHTML = titulosProcessados.map(item => `
+        <tr>
+          <td><strong>${item.id}</strong></td>
+          <td>${item.descricao}</td>
+          <td>${formatarMoeda(item.valorOriginal)}</td>
+          <td>${item.dataVencimento}</td>
+          <td>${item.diasAtraso} ${item.diasAtraso === 1 ? 'dia' : 'dias'}</td>
+          <td><strong class="val-juros">${formatarMoeda(item.valorJuros)}</strong></td>
+          <td><strong>${formatarMoeda(item.valorTotal)}</strong></td>
+          <td>
+            <span class="badge-status ${item.status === 'em atraso' ? 'em-atraso' : 'em-dia'}">
+              ${item.status}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+
+      boxLote.style.display = 'block';
+
+      // atualiza badge e botao de voltar
+      badgeOrigem.textContent = `origem: ${arquivo.name} (${resumoGeral.totalTitulos} titulos)`;
+      badgeOrigem.classList.add('customizado');
+      btnLimpar.style.display = 'inline-flex';
+
+      feedback.className = 'feedback-msg sucesso';
+      feedback.textContent = `sucesso: lote de ${resumoGeral.totalTitulos} titulos calculado! juros totais: ${formatarMoeda(resumoGeral.totalJuros)}`;
+      feedback.style.display = 'block';
+
+    } catch (erro) {
+      feedback.className = 'feedback-msg erro';
+      feedback.textContent = erro.message;
+      feedback.style.display = 'block';
+    } finally {
+      inputArquivo.value = '';
+    }
+  });
+
+  // evento de voltar ao modo individual
+  if (btnLimpar) {
+    btnLimpar.addEventListener('click', () => {
+      boxLote.style.display = 'none';
+      badgeOrigem.textContent = 'modo: calculo individual via formulario';
+      badgeOrigem.classList.remove('customizado');
+      btnLimpar.style.display = 'none';
+      feedback.style.display = 'none';
+    });
+  }
 }

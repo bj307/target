@@ -48,4 +48,48 @@ router.post('/movimentar', (req, res) => {
   }
 });
 
+// carrega catalogo de estoque customizado via upload de json
+router.post('/upload', (req, res) => {
+  try {
+    const produtos = req.body.estoque || req.body;
+    const novosProdutos = estoqueService.carregarEstoqueCustomizado(produtos);
+    return res.status(200).json({
+      sucesso: true,
+      origem: 'upload',
+      mensagem: 'catalogo de estoque atualizado com sucesso a partir do json enviado',
+      dados: {
+        produtos: novosProdutos,
+        historico: estoqueService.listarHistorico()
+      }
+    });
+  } catch (error) {
+    return res.status(400).json({
+      sucesso: false,
+      mensagem: error.message
+    });
+  }
+});
+
+// restaura o catalogo padrao do arquivo estoque.json
+router.post('/restaurar', (req, res) => {
+  try {
+    const produtos = estoqueService.restaurarEstoquePadrao();
+    return res.status(200).json({
+      sucesso: true,
+      origem: 'padrao',
+      mensagem: 'estoque padrao restaurado com sucesso',
+      dados: {
+        produtos,
+        historico: estoqueService.listarHistorico()
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      mensagem: 'erro ao restaurar estoque padrao',
+      detalhes: error.message
+    });
+  }
+});
+
 export default router;
